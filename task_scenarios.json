@@ -1,8 +1,1 @@
-{
-    "scenarios": [
-        {
-            "id": 1,
-            "description": "Simulate initial greeting exchange between AnnabanAI and GeminiRelay."
-        }
-    ]
-}
+
