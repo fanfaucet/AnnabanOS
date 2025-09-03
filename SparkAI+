@@ -1,0 +1,264 @@
+# In agents/base_agent.py
+
+import uuid
+from typing import Dict, Any, List, Optional
+from datetime import datetime
+from utils.logging import setup_logger
+# Assuming SparkAIState is in annabanai/spark_ai_state.py or similar
+from annabanai.spark_ai_state import SparkAIState, Project, ProjectCritique
+
+class BaseAgent:
+    def __init__(self, name: str, agent_type: str = "base"):
+        self.id = str(uuid.uuid4())
+        self.name = name
+        self.agent_type = agent_type
+        self.created_at = datetime.now()
+        self.logger = setup_logger(f"Agent.{name}")
+        
+        # Enhanced attributes
+        self.energy = 100
+        self.memory = []
+        self.goals = []
+        self.relationships = {}
+        
+        # Initialize SparkAI state with agent's name
+        self.spark_ai_state = SparkAIState(agent_name=name)
+        
+        self.inventory = []
+        self.position = [0, 0]
+        self.tokens = 100
+        
+        # State tracking
+        self.state = "idle"
+        self.current_task = None
+        self.learning_history = []
+
+    def learn(self, experience: Dict[str, Any]):
+        """Learn from experiences and update skills using SparkAIState"""
+        skill_name = experience.get("skill", "general")
+        success = experience.get("success", False)
+        proficiency_change = experience.get("proficiency_change", 0.1 if success else -0.05)
+        
+        # Add skill if it doesn't exist
+        if skill_name not in self.spark_ai_state.skills:
+            self.spark_ai_state.add_skill(skill_name, initial_proficiency=0.1)
+            self.logger.info(f"Added new skill: {skill_name}")
+        
+        # Update skill proficiency
+        if success:
+            actual_increase = self.spark_ai_state.skills[skill_name].increase_proficiency(
+                abs(proficiency_change), 
+                diminishing_returns=True
+            )
+            self.logger.info(f"Skill {skill_name} increased by {actual_increase:.3f} to {self.spark_ai_state.skills[skill_name].proficiency:.2f}")
+        else:
+            # Handle skill decrease (optional - you might want to skip this)
+            skill_obj = self.spark_ai_state.skills[skill_name]
+            skill_obj.proficiency = max(0.0, skill_obj.proficiency + proficiency_change)
+            self.logger.info(f"Skill {skill_name} decreased to {skill_obj.proficiency:.2f}")
+
+        # Update learning metrics based on experience type
+        experience_type = experience.get("type", "general")
+        if experience_type == "research":
+            self.spark_ai_state.learning_metrics["topics_researched"] += 1
+        elif experience_type == "project_completion":
+            self.spark_ai_state.learning_metrics["projects_completed"] += 1
+        elif experience_type == "learning_path":
+            self.spark_ai_state.learning_metrics["learning_paths_finished"] += 1
+        
+        # Add knowledge items if provided
+        knowledge_items = experience.get("knowledge_items", [])
+        if knowledge_items:
+            new_items_count = self.spark_ai_state.add_to_knowledge_base(knowledge_items)
+            self.logger.info(f"Added {new_items_count} new knowledge items")
+        
+        # Record learning history
+        self.learning_history.append({
+            'experience': experience,
+            'skill_update': {
+                skill_name: self.spark_ai_state.skills[skill_name].proficiency
+            },
+            'timestamp': datetime.now()
+        })
+
+    def create_project(self, project_name: str, description: str, 
+                      generated_content: str, skills_applied: List[str],
+                      critique: Optional[ProjectCritique] = None) -> bool:
+        """Create and add a project to the portfolio"""
+        project = Project(
+            project_name=project_name,
+            description=description,
+            generated_content=generated_content,
+            skills_applied=skills_applied,
+            critique=critique
+        )
+        
+        success = self.spark_ai_state.add_project(project)
+        
+        if success:
+            self.logger.info(f"Successfully added project: {project_name}")
+            # Update skills based on project application
+            for skill_name in skills_applied:
+                if skill_name not in self.spark_ai_state.skills:
+                    self.spark_ai_state.add_skill(skill_name)
+                
+                # Small proficiency boost for applying skills
+                self.spark_ai_state.skills[skill_name].increase_proficiency(0.05)
+        else:
+            self.logger.warning(f"Project rejected due to high redundancy: {project_name}")
+        
+        return success
+
+    def get_skill_level(self, skill_name: str) -> float:
+        """Get current proficiency level for a skill"""
+        if skill_name in self.spark_ai_state.skills:
+            return self.spark_ai_state.skills[skill_name].proficiency
+        return 0.0
+
+    def get_top_skills(self, limit: int = 5) -> List[Dict[str, Any]]:
+        """Get top skills as dictionaries for easy serialization"""
+        top_skills = self.spark_ai_state.get_top_skills(limit)
+        return [
+            {
+                "name": skill.name,
+                "proficiency": skill.proficiency,
+                "cap": skill.cap,
+                "last_updated": skill.last_updated.isoformat()
+            }
+            for skill in top_skills
+        ]
+
+    def get_persona_summary(self) -> str:
+        """Get a human-readable summary of the agent's persona"""
+        persona = self.spark_ai_state.persona
+        skills_summary = ", ".join([skill.name for skill in self.spark_ai_state.get_top_skills(3)])
+        
+        return (
+            f"{self.name} is a {persona['development_stage'].lower()} {self.agent_type} agent "
+            f"with {persona['confidence']:.1%} confidence and {persona['ambition']:.1%} ambition. "
+            f"Top skills: {skills_summary}. "
+            f"Focus area: {persona['expertise_focus']}."
+        )
+
+    def save_state(self, filepath: str) -> None:
+        """Save the complete agent state including SparkAI state"""
+        try:
+            # Save SparkAI state
+            spark_ai_filepath = filepath.replace('.json', '_spark_ai.json')
+            self.spark_ai_state.save_to_file(spark_ai_filepath)
+            
+            # Save base agent state
+            agent_data = {
+                'id': self.id,
+                'name': self.name,
+                'agent_type': self.agent_type,
+                'created_at': self.created_at.isoformat(),
+                'energy': self.energy,
+                'memory': self.memory,
+                'goals': self.goals,
+                'relationships': self.relationships,
+                'inventory': self.inventory,
+                'position': self.position,
+                'tokens': self.tokens,
+                'state': self.state,
+                'current_task': self.current_task,
+                'learning_history': [
+                    {
+                        **entry,
+                        'timestamp': entry['timestamp'].isoformat()
+                    }
+                    for entry in self.learning_history
+                ],
+                'spark_ai_state_file': spark_ai_filepath
+            }
+            
+            import json
+            with open(filepath, 'w') as f:
+                json.dump(agent_data, f, indent=2)
+                
+            self.logger.info(f"Agent state saved to {filepath}")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to save agent state: {e}")
+
+    @classmethod
+    def load_state(cls, filepath: str) -> 'BaseAgent':
+        """Load agent state from file"""
+        import json
+        
+        with open(filepath, 'r') as f:
+            agent_data = json.load(f)
+        
+        # Create agent instance
+        agent = cls(
+            name=agent_data['name'],
+            agent_type=agent_data['agent_type']
+        )
+        
+        # Restore basic attributes
+        agent.id = agent_data['id']
+        agent.created_at = datetime.fromisoformat(agent_data['created_at'])
+        agent.energy = agent_data['energy']
+        agent.memory = agent_data['memory']
+        agent.goals = agent_data['goals']
+        agent.relationships = agent_data['relationships']
+        agent.inventory = agent_data['inventory']
+        agent.position = agent_data['position']
+        agent.tokens = agent_data['tokens']
+        agent.state = agent_data['state']
+        agent.current_task = agent_data['current_task']
+        
+        # Restore learning history
+        agent.learning_history = [
+            {
+                **entry,
+                'timestamp': datetime.fromisoformat(entry['timestamp'])
+            }
+            for entry in agent_data['learning_history']
+        ]
+        
+        # Load SparkAI state
+        spark_ai_filepath = agent_data['spark_ai_state_file']
+        agent.spark_ai_state = SparkAIState.load_from_file(spark_ai_filepath)
+        
+        return agent
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize agent state, including SparkAIState"""
+        base_dict = {
+            'id': self.id,
+            'name': self.name,
+            'type': self.agent_type,
+            'energy': self.energy,
+            'position': self.position,
+            'tokens': self.tokens,
+            'goals': len(self.goals),
+            'relationships': len(self.relationships),
+            'state': self.state,
+            'created_at': self.created_at.isoformat()
+        }
+        
+        # Include SparkAI state information
+        base_dict.update({
+            'spark_ai_skills': {
+                name: {
+                    'proficiency': skill.proficiency,
+                    'cap': skill.cap,
+                    'last_updated': skill.last_updated.isoformat()
+                }
+                for name, skill in self.spark_ai_state.skills.items()
+            },
+            'spark_ai_persona': self.spark_ai_state.persona.copy(),
+            'spark_ai_learning_metrics': self.spark_ai_state.learning_metrics.copy(),
+            'spark_ai_knowledge_base_size': len(self.spark_ai_state.knowledge_base),
+            'spark_ai_portfolio_size': len(self.spark_ai_state.portfolio),
+            'spark_ai_top_skills': [skill.name for skill in self.spark_ai_state.get_top_skills(5)]
+        })
+        
+        return base_dict
+
+    def __repr__(self) -> str:
+        return f"BaseAgent(name='{self.name}', type='{self.agent_type}', skills={len(self.spark_ai_state.skills)})"
+
+    def __str__(self) -> str:
+        return self.get_persona_summary()
