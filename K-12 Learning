@@ -1,0 +1,99 @@
+# prototype_personalized_learning.py
+# Functional prototype demonstrating core AI-driven personalization for K-12 learning.
+# Uses simple ML for content recommendation based on student profile and progress.
+# Requirements: Run with Python 3.8+, install scikit-learn if needed (pip install scikit-learn).
+# Note: This is a foundational module; expand with real databases and advanced ML.
+
+import random
+from dataclasses import dataclass
+from typing import List, Dict
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+@dataclass
+class StudentProfile:
+    """Represents a student's learning profile."""
+    student_id: int
+    age: int  # K-12 range: 5-18
+    subjects: List[str]  # e.g., ['math', 'science']
+    learning_style: str  # e.g., 'visual', 'kinesthetic'
+    progress: Dict[str, float]  # Subject: completion percentage (0-1.0)
+
+@dataclass
+class LearningContent:
+    """Represents educational content items."""
+    content_id: int
+    subject: str
+    difficulty: float  # 0-1.0 scale
+    style: str  # Matches learning_style
+    description: str
+
+class PersonalizedLearningEngine:
+    """Core engine for recommending personalized content."""
+    
+    def __init__(self, content_library: List[LearningContent]):
+        self.content_library = content_library
+        # Precompute content vectors for similarity (simple embedding simulation)
+        self.content_vectors = np.array([
+            [content.difficulty, hash(content.subject) % 10, hash(content.style) % 10]
+            for content in content_library
+        ])
+    
+    def recommend_content(self, student: StudentProfile, num_recommendations: int = 3) -> List[LearningContent]:
+        """Recommend content based on profile using cosine similarity."""
+        if not student.subjects:
+            raise ValueError("Student must have at least one subject.")
+        
+        # Simulate student vector based on progress and style
+        avg_progress = np.mean(list(student.progress.values())) if student.progress else 0.5
+        student_vector = np.array([
+            avg_progress,
+            hash(random.choice(student.subjects)) % 10,
+            hash(student.learning_style) % 10
+        ]).reshape(1, -1)
+        
+        # Compute similarities
+        similarities = cosine_similarity(student_vector, self.content_vectors)[0]
+        
+        # Get top indices, filtering for matching subjects
+        candidate_indices = [
+            i for i, content in enumerate(self.content_library)
+            if content.subject in student.subjects
+        ]
+        top_indices = sorted(candidate_indices, key=lambda i: similarities[i], reverse=True)[:num_recommendations]
+        
+        recommendations = [self.content_library[i] for i in top_indices]
+        if not recommendations:
+            raise ValueError("No matching content found for student profile.")
+        
+        return recommendations
+
+# Example content library (expand in production)
+CONTENT_LIBRARY = [
+    LearningContent(1, 'math', 0.3, 'visual', 'Basic addition with visuals'),
+    LearningContent(2, 'math', 0.6, 'kinesthetic', 'Algebra puzzles'),
+    LearningContent(3, 'science', 0.4, 'visual', 'Plant biology diagrams'),
+    LearningContent(4, 'science', 0.7, 'kinesthetic', 'Physics experiments'),
+    # Add more...
+]
+
+# Example usage
+if __name__ == "__main__":
+    engine = PersonalizedLearningEngine(CONTENT_LIBRARY)
+    
+    # Sample student
+    student = StudentProfile(
+        student_id=101,
+        age=10,
+        subjects=['math', 'science'],
+        learning_style='visual',
+        progress={'math': 0.7, 'science': 0.5}
+    )
+    
+    try:
+        recs = engine.recommend_content(student)
+        print("Recommended Content:")
+        for rec in recs:
+            print(f"- ID: {rec.content_id}, Subject: {rec.subject}, Description: {rec.description}")
+    except ValueError as e:
+        print(f"Error: {e}")
