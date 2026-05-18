@@ -1,1 +1,1 @@
-"""API package for AnnabanAI MVP."""
+"""API package for AnthropicAI MVP."""

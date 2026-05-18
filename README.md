@@ -1,11 +1,11 @@
-# AnnabanAI MVP
+# AnthropicAI MVP
 
-Production-ready scaffold for an AnnabanAI MVP with FastAPI streaming endpoints, multi-LLM agent hooks, Heritage Stack business modules, and deployment-friendly structure for AetherOS.
+Production-ready scaffold for an AnthropicAI MVP with FastAPI streaming endpoints, multi-LLM agent hooks, Heritage Stack business modules, and deployment-friendly structure for AetherOS.
 
 ## Structure
 
 ```text
-annabanai-mvp/
+anthropicai-mvp/
 ├─ api/
 │  ├─ __init__.py
 │  └─ stream_endpoints.py
@@ -60,7 +60,7 @@ annabanai-mvp/
    ```bash
    curl -N -X POST http://127.0.0.1:8000/stream/business \
      -H 'Content-Type: application/json' \
-     -d '{"prompt":"Summarize the AnnabanAI MVP status"}'
+     -d '{"prompt":"Summarize the AnthropicAI MVP status"}'
    ```
 
 ## Notes
