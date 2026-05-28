@@ -1,0 +1,10 @@
+class CostTracker:
+    def __init__(self):
+        self.total_cost = {}
+
+    def record(self, model, usage):
+        cost = usage.get("cost", 0.0)
+        self.total_cost[model] = self.total_cost.get(model, 0.0) + cost
+
+    def get_total(self):
+        return sum(self.total_cost.values())
