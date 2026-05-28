@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: annaban-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: annaban-runner
+  template:
+    metadata:
+      labels:
+        app: annaban-runner
+    spec:
+      containers:
+      - name: runner
+        image: annaban/benchmark:latest

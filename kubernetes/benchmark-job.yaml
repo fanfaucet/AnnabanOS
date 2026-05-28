@@ -1,0 +1,11 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: annaban-benchmark
+spec:
+  template:
+    spec:
+      containers:
+      - name: runner
+        image: annaban/benchmark:latest
+      restartPolicy: Never
