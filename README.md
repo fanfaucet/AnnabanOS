@@ -1,70 +1,53 @@
-# AnthropicAI MVP
+# AnnabanAI Governance Middleware
 
-Production-ready scaffold for an AnthropicAI MVP with FastAPI streaming endpoints, multi-LLM agent hooks, Heritage Stack business modules, and deployment-friendly structure for AetherOS.
+AnnabanAI is a deterministic wrapper for probabilistic LLM calls. It routes prompts, applies policy constraints, observes operational signals, and records replayable audit events without claiming that any model output is true.
 
-## Structure
+## System Contract
+
+AnnabanAI has four responsibilities:
+
+1. **Route** — select a model using operational heuristics such as latency, cost, and task type.
+2. **Constrain** — apply deterministic policy sidecars to text and metadata.
+3. **Observe** — emit signal heuristics such as ambiguity or authority-language markers without epistemic claims.
+4. **Record** — write append-only, hash-chained audit events that can be verified and replayed.
+
+The orchestrator does **not** decide truth, correctness, or epistemic confidence. Agreement and governance scores are execution metadata only.
+
+## Minimal Pipeline
 
 ```text
-anthropicai-mvp/
-├─ api/
-│  ├─ __init__.py
-│  └─ stream_endpoints.py
-├─ llm_agents/
-│  ├─ __init__.py
-│  ├─ anthropic_agent.py
-│  ├─ base_agent.py
-│  └─ openai_agent.py
-├─ heritage/
-│  └─ modules/
-│     ├─ analyticsModule.js
-│     ├─ archiveModule.js
-│     └─ subscriptionModule.js
-├─ aggregator.py
-├─ main.py
-└─ requirements.txt
+Prompt
+  -> Router
+  -> Model adapter
+  -> Constraint layer
+  -> Output normalizer
+  -> Audit logger
+  -> Output
 ```
 
-## Features
+## Run
 
-- FastAPI app entrypoint wired to streaming routes.
-- Async stream aggregator that merges responses from multiple LLM providers.
-- OpenAI Responses API streaming support.
-- Placeholder Anthropic agent for future extension.
-- Heritage Stack JavaScript modules for analytics, quotas, and archive milestones.
-- Environment-variable-driven provider configuration for immediate deployment hardening.
+```bash
+pip install -e .
+annaban
+annaban --prompt "Summarize the operational risks of a delayed shipment" --task-type fast
+```
 
-## Quickstart
+## Project Layout
 
-1. Create and activate a Python virtual environment.
-2. Install dependencies:
+- `annaban_benchmark/orchestrator.py` — single-turn governance middleware pipeline.
+- `annaban_benchmark/router.py` — model selection and fallback-chain metadata.
+- `annaban_benchmark/constraints.py` — deterministic sidecar policy transformations.
+- `annaban_benchmark/signals.py` — non-epistemic signal heuristics.
+- `annaban_benchmark/audit.py` — append-only hash-chained audit log.
+- `annaban_benchmark/harness.py` — reproducible operational benchmark harness.
+- `datasets/` — JSONL prompt suites for repeatable evaluations.
+- `kubernetes/` — deployment and job manifests.
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Benchmark Metrics
 
-3. Export provider credentials:
-
-   ```bash
-   export OPENAI_API_KEY="your-openai-key"
-   export ANTHROPIC_API_KEY="your-anthropic-key"  # optional
-   ```
-
-4. Run the API locally:
-
-   ```bash
-   uvicorn main:app --reload --port 8000
-   ```
-
-5. Test the SSE endpoint:
-
-   ```bash
-   curl -N -X POST http://127.0.0.1:8000/stream/business \
-     -H 'Content-Type: application/json' \
-     -d '{"prompt":"Summarize the AnthropicAI MVP status"}'
-   ```
-
-## Notes
-
-- The `/stream/business` route emits Server-Sent Events (`text/event-stream`).
-- If no provider keys are configured, the stream returns an SSE error payload instead of failing the request.
-- The Anthropic agent currently returns placeholder content and should be swapped for the official SDK before production traffic.
+- Policy pass rate
+- Cost per task
+- Agreement signal
+- Audit integrity
+- Governance score as an operational composite, not a correctness score

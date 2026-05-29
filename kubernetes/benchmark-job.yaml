@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: annaban-governance-benchmark
+spec:
+  template:
+    spec:
+      containers:
+      - name: runner
+        image: annaban/benchmark:latest
+        env:
+        - name: ANNABAN_MODE
+          value: governance-benchmark
+      restartPolicy: Never
