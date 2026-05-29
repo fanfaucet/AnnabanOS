@@ -55,13 +55,7 @@ anthropicai-mvp/
    uvicorn main:app --reload --port 8000
    ```
 
-5. Open the local interface:
-
-   ```bash
-   open http://127.0.0.1:8000/
-   ```
-
-6. Test the SSE endpoint directly:
+5. Test the SSE endpoint:
 
    ```bash
    curl -N -X POST http://127.0.0.1:8000/stream/business \
