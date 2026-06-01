@@ -86,3 +86,18 @@ curl -X POST http://127.0.0.1:8000/maritime/eta \
     "destination": {"lat": 0, "lon": 1}
   }'
 ```
+
+## IAFTP Transfer Simulation
+
+AnnabanOS also includes a local AFMOS Inter-Agent File Transfer Protocol (IAFTP) simulation for protocol-level artifact handoff between planner and executor roles:
+
+- `src/core/gitLedger.ts` provides a hash-chained ledger for replay-safe transfer receipts.
+- `src/core/iaftp.ts` provides packet encoding, integrity verification, event-bus routing emulation, memory/filesystem artifact stores, and Codex executor receipt handling.
+- `src/core/iaftpDemo.ts` runs the `TX-88421` planner-to-executor transfer example locally.
+
+Run the IAFTP tests and demo with:
+
+```bash
+npm run test:iaftp
+node src/core/iaftpDemo.ts
+```

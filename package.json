@@ -1,0 +1,9 @@
+{
+  "name": "annabanos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:iaftp": "node --test tests/test_iaftp.mjs"
+  }
+}
