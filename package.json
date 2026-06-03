@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:iaftp": "node --test tests/test_iaftp.mjs"
+    "test:iaftp": "node --test tests/test_iaftp.mjs",
+    "test:spark": "node --test tests/test_spark_integration.mjs",
+    "demo:spark": "node src/core/sparkIntegrationDemo.ts"
   }
 }

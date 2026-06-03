@@ -101,3 +101,19 @@ Run the IAFTP tests and demo with:
 npm run test:iaftp
 node src/core/iaftpDemo.ts
 ```
+
+## Fictional RTX Spark / SparkAI Simulation
+
+AnnabanOS includes a clearly fictional, local RTX Spark ↔ SparkAI integration simulation for validating governance and haptic safety boundaries without contacting any external systems:
+
+- `src/core/sparkIntegration.ts` models the local compute node, SparkAI telemetry, AnnabanOS policy gate, haptic bridge, and hash-chained audit recording.
+- `src/core/sparkIntegrationDemo.ts` replays the approved low-risk event and blocked high-risk event from the simulation transcript.
+- `rust/haptic_controller/` contains the Rust haptic controller mapping that converts approved confidence into actuator frequency/intensity and forces denied authority to safe zero-output.
+
+Run the simulation checks with:
+
+```bash
+npm run test:spark
+node src/core/sparkIntegrationDemo.ts
+cargo test --manifest-path rust/haptic_controller/Cargo.toml
+```
