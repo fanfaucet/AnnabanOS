@@ -249,6 +249,9 @@ impl DurableQuorumState {
     /// Recovery validates persisted votes against the current peer registry and their
     /// signatures. Invalid legacy or corrupted entries are ignored in memory rather
     /// than trusted; operators can audit sled directly if forensic detail is needed.
+    /// If a crash happened after enough raw votes were flushed but before the
+    /// finalized marker was written, recovery derives and persists the missing
+    /// marker before publishing rebuilt hot caches.
     pub async fn recover_from_disk(&self) -> RelayResult<()> {
         let registry = self.peer_registry.read().await;
         let mut recovered_votes: HashMap<Uuid, HashMap<[u8; 32], QuorumVote>> = HashMap::new();
@@ -271,6 +274,20 @@ impl DurableQuorumState {
             let (_key, value) = entry?;
             let marker: FinalizedMarker = postcard::from_bytes(&value)?;
             recovered_finalized.insert(marker.event_id);
+        }
+
+        let mut missing_markers = Vec::new();
+        for (event_id, event_votes) in &recovered_votes {
+            let commit_votes = Self::commit_vote_count(event_votes);
+            if commit_votes >= self.quorum_threshold && !recovered_finalized.contains(event_id) {
+                missing_markers.push((*event_id, commit_votes));
+            }
+        }
+
+        for (event_id, commit_votes) in missing_markers {
+            self.persist_finalized_marker(event_id, commit_votes)
+                .await?;
+            recovered_finalized.insert(event_id);
         }
 
         *self.votes_by_event.write().await = recovered_votes;
@@ -319,10 +336,7 @@ impl DurableQuorumState {
         let mut votes_guard = self.votes_by_event.write().await;
         let event_votes = votes_guard.entry(event_id).or_default();
         event_votes.insert(vote.voter_key, vote);
-        let commit_votes = event_votes
-            .values()
-            .filter(|stored_vote| stored_vote.decision == VoteDecision::Commit)
-            .count();
+        let commit_votes = Self::commit_vote_count(event_votes);
         drop(votes_guard);
 
         if commit_votes >= self.quorum_threshold {
@@ -409,6 +423,13 @@ impl DurableQuorumState {
         }
 
         Ok(())
+    }
+
+    fn commit_vote_count(event_votes: &HashMap<[u8; 32], QuorumVote>) -> usize {
+        event_votes
+            .values()
+            .filter(|stored_vote| stored_vote.decision == VoteDecision::Commit)
+            .count()
     }
 
     fn verify_vote_signature(vote: &QuorumVote) -> RelayResult<()> {
