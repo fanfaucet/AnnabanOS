@@ -8,3 +8,8 @@ class CostTracker:
 
     def get_total(self):
         return sum(self.total_cost.values())
+
+
+def total_cost(items):
+    """Aggregate cost fields from benchmark records."""
+    return sum(float(item.get("cost", 0.0)) for item in items)

@@ -3,7 +3,7 @@ name = "annaban-benchmark"
 version = "0.1.0"
 description = "Deterministic LLM governance middleware with routing, constraints, signals, and audit logging"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["fastapi>=0.100"]
 
 [project.scripts]
-annaban = "cli:main"
+annaban = "annaban_benchmark.cli:main"
