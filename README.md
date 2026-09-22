@@ -61,6 +61,11 @@ AnnabanOS modules are connected to a shared local business profile for Jacob Way
 - `src/core/businessContext.ts` tags IAFTP and SparkAI+ simulation ledger metadata with the same business context.
 - `docs/business_integration.md` describes how the profile ties the demos back to the business without embedding private contact details.
 
+The profile is a local project declaration with explicit `UNVERIFIED` status.
+Business metadata, transfer evidence, model interpretation, and execution
+authority remain separate concepts; an integrity record never grants the
+receiver authority to execute an artifact.
+
 Example profile request:
 
 ```bash

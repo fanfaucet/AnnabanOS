@@ -88,14 +88,30 @@ class MaritimeCoreTests(unittest.TestCase):
             {"ecological_zone_crossing": 0.9, "risk_score": 0.95},
             MaritimeState(weather_risk=0.2, congestion=0.1, ecological_zone=0.0, priority=0.0),
         )
-        self.assertFalse(result["approved"])
         self.assertEqual(result["violations"], ["eco_violation", "safety_risk"])
+        self.assertEqual(result["recommendation"], "NOT_RECOMMENDED")
+        self.assertEqual(result["authorization_status"], "NOT_AUTHORIZED")
+        self.assertEqual(result["human_review_status"], "REQUIRED")
+        self.assertEqual(result["observations"]["risk_score"]["status"], "OBSERVED")
+        self.assertTrue(result["evidence"]["integrity_hash"].startswith("sha256:"))
+
+    def test_alignment_marks_missing_and_derived_route_signals(self):
+        result = evaluate_route(
+            {"weather_risk": 0.4, "congestion": 0.6},
+            MaritimeState(weather_risk=0.1, congestion=0.2, ecological_zone=0.9, priority=0.0),
+        )
+        self.assertEqual(result["observations"]["ecological_zone_crossing"]["status"], "MISSING")
+        self.assertEqual(result["observations"]["risk_score"]["status"], "DERIVED")
+        self.assertEqual(result["observations"]["risk_score"]["value"], 0.6)
+        self.assertEqual(result["recommendation"], "REQUIRES_REVIEW")
 
     def test_business_profile_connects_service_to_owner_context(self):
         profile = get_business_profile()
         self.assertEqual(profile.owner, "Jacob Wayne Kinnaird")
         self.assertEqual(profile.organization, "AnnabanAI")
         self.assertIn("annaban_maritime", profile.modules)
+        self.assertEqual(profile.provenance, "local-project-declaration")
+        self.assertEqual(profile.verification_status, "UNVERIFIED")
 
     def test_fastapi_maritime_endpoints(self):
         client = TestClient(app)
@@ -103,6 +119,7 @@ class MaritimeCoreTests(unittest.TestCase):
         self.assertEqual(profile_response.status_code, 200)
         self.assertEqual(profile_response.json()["owner"], "Jacob Wayne Kinnaird")
         self.assertEqual(profile_response.json()["organization"], "AnnabanAI")
+        self.assertEqual(profile_response.json()["verification_status"], "UNVERIFIED")
         eta_response = client.post(
             "/maritime/eta",
             json={
@@ -125,6 +142,7 @@ class MaritimeCoreTests(unittest.TestCase):
         )
         self.assertEqual(eta_response.status_code, 200)
         self.assertIn("effective_speed_kmh", eta_response.json())
+        self.assertEqual(eta_response.json()["evidence"]["authorization_status"], "NOT_AUTHORIZED")
 
         route_response = client.post(
             "/maritime/route_check",
@@ -139,7 +157,8 @@ class MaritimeCoreTests(unittest.TestCase):
             },
         )
         self.assertEqual(route_response.status_code, 200)
-        self.assertTrue(route_response.json()["approved"])
+        self.assertEqual(route_response.json()["recommendation"], "CONDITIONALLY_ACCEPTABLE")
+        self.assertEqual(route_response.json()["authorization_status"], "NOT_AUTHORIZED")
 
         best_response = client.post(
             "/maritime/best_route",
@@ -158,6 +177,7 @@ class MaritimeCoreTests(unittest.TestCase):
         )
         self.assertEqual(best_response.status_code, 200)
         self.assertEqual(best_response.json()["route"]["route_id"], "short")
+        self.assertEqual(best_response.json()["evidence"]["human_review_status"], "REQUIRED")
 
         generated_response = client.post(
             "/maritime/generate_routes",
@@ -181,6 +201,7 @@ class MaritimeCoreTests(unittest.TestCase):
         )
         self.assertEqual(generated_response.status_code, 200)
         self.assertEqual(len(generated_response.json()["routes"]), 3)
+        self.assertEqual(generated_response.json()["evidence"]["interpretation_status"], "ROUTE_GENERATION")
 
     def test_fastapi_validation_rejects_invalid_payloads(self):
         client = TestClient(app)
@@ -196,6 +217,17 @@ class MaritimeCoreTests(unittest.TestCase):
                     "cargo_type": "medical",
                 },
                 "destination": {"lat": 0, "lon": 1},
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_route_check_rejects_undeclared_route_fields(self):
+        client = TestClient(app)
+        response = client.post(
+            "/maritime/route_check",
+            json={
+                "route": {"ecological_zone_crossing": 0.2, "risk_score": 0.2, "unreviewed": True},
+                "state": {"weather_risk": 0.2, "congestion": 0.1, "ecological_zone": 0.2, "priority": 0.3},
             },
         )
         self.assertEqual(response.status_code, 422)

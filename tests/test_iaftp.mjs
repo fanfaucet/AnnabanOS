@@ -28,6 +28,9 @@ test("IAFTP packet transfer writes artifact and records verifiable ledger entry"
   assert.equal(receipt.status, "success");
   assert.equal(receipt.verification, "integrity_passed");
   assert.equal(receipt.artifact, "gitLedger.ts");
+  assert.equal(receipt.evidence.authorizationStatus, "NOT_AUTHORIZED");
+  assert.equal(receipt.evidence.humanReviewStatus, "REQUIRED");
+  assert.match(receipt.evidence.integrityHash, /^sha256:/);
   assert.equal(await executor.readArtifact("/src/core/gitLedger.ts"), "export class GitLedger {}");
   assert.equal(executor.verifyLedger(), true);
   assert.equal(executor.ledgerEntries().length, 1);

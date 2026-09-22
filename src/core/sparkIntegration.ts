@@ -1,4 +1,5 @@
 import { JACOB_KINNAIRD_BUSINESS, businessTelemetryEnvelope } from "./businessContext.ts";
+import { createEvidenceEnvelope, type AnnabanEvidenceEnvelope } from "./evidenceEnvelope.ts";
 import { GitLedger, type LedgerEntry } from "./gitLedger.ts";
 
 export type SparkCapability = "inference" | "vector_search" | "tool_execution";
@@ -58,6 +59,7 @@ export type SparkSessionResult = {
   hapticOutputs: HapticOutput[];
   ledgerEntries: readonly LedgerEntry[];
   summary: SparkSessionSummary;
+  evidence: readonly AnnabanEvidenceEnvelope[];
 };
 
 export class FictionalRtxSparkNode {
@@ -162,6 +164,7 @@ export class RtxSparkIntegrationSimulation {
   readonly #ledger = new GitLedger();
   readonly #events: SparkSimulationEvent[] = [];
   readonly #hapticOutputs: HapticOutput[] = [];
+  readonly #evidence: AnnabanEvidenceEnvelope[] = [];
 
   run(): SparkSessionResult {
     this.#events.push(this.#node.boot());
@@ -206,6 +209,7 @@ export class RtxSparkIntegrationSimulation {
       hapticOutputs: this.#hapticOutputs.map((output) => Object.freeze({ ...output })),
       ledgerEntries: this.#ledger.entries(),
       summary: this.summary(),
+      evidence: this.#evidence.map((entry) => Object.freeze({ ...entry, payload: { ...entry.payload } })),
     };
   }
 
@@ -216,6 +220,15 @@ export class RtxSparkIntegrationSimulation {
     const hapticOutput = this.#hapticBridge.output(decision, telemetry);
     this.#hapticOutputs.push(hapticOutput);
 
+    const evidence = createEvidenceEnvelope({
+      source: "spark_integration.policy_gate",
+      sourceType: "fictional_local_simulation",
+      provenance: "local-simulation-derived",
+      payload: { action, telemetry, decision, hapticOutput },
+      interpretationStatus: "POLICY_GATE_RESULT",
+      authorizationStatus: decision.status === "blocked" ? "DENIED" : "NOT_AUTHORIZED",
+    });
+    this.#evidence.push(evidence);
     this.#ledger.append({
       event: action,
       packetId: `${time}-${action}`,
@@ -228,6 +241,7 @@ export class RtxSparkIntegrationSimulation {
         reason: decision.reason,
         telemetry,
         hapticOutput,
+        evidence,
       }),
     });
 

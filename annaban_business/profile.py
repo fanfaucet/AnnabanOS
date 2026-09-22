@@ -16,6 +16,9 @@ class BusinessProfile:
     organization: str = "AnnabanAI"
     orchestration_platform: str = "SparkAI+"
     operating_system: str = "AnnabanOS"
+    profile_version: str = "0.2.0"
+    provenance: str = "local-project-declaration"
+    verification_status: str = "UNVERIFIED"
     tagline: str = "Deterministic governance and simulation middleware for agentic AI systems."
     business_domains: tuple[str, ...] = (
         "AI governance middleware",
@@ -41,6 +44,9 @@ class BusinessProfile:
             "organization": self.organization,
             "orchestration_platform": self.orchestration_platform,
             "operating_system": self.operating_system,
+            "profile_version": self.profile_version,
+            "provenance": self.provenance,
+            "verification_status": self.verification_status,
             "tagline": self.tagline,
             "business_domains": list(self.business_domains),
             "modules": dict(self.modules),

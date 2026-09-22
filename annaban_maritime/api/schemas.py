@@ -61,10 +61,11 @@ class EtaResponse(BaseModel):
     eta_lower: float
     eta_upper: float
     uncertainty: float
+    evidence: dict[str, Any]
 
 
 class RouteModel(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     route_id: str | None = None
     distance: float | None = Field(default=None, ge=0)
@@ -87,11 +88,15 @@ class RouteCheckRequest(BaseModel):
 
 
 class RouteCheckResponse(BaseModel):
-    approved: bool
     alignment_score: float
     violations: list[str]
     policies_triggered: list[str]
     priority: float
+    observations: dict[str, dict[str, Any]]
+    recommendation: Literal["CONDITIONALLY_ACCEPTABLE", "REQUIRES_REVIEW", "NOT_RECOMMENDED"]
+    authorization_status: Literal["NOT_AUTHORIZED"]
+    human_review_status: Literal["REQUIRED"]
+    evidence: dict[str, Any]
 
 
 class BestRouteRequest(BaseModel):
@@ -112,10 +117,12 @@ class GenerateRoutesRequest(BaseModel):
 
 class BestRouteResponse(BaseModel):
     route: dict[str, Any]
+    evidence: dict[str, Any]
 
 
 class GeneratedRoutesResponse(BaseModel):
     routes: list[dict[str, Any]]
+    evidence: dict[str, Any]
 
 
 class HealthResponse(BaseModel):
@@ -127,6 +134,9 @@ class BusinessProfileResponse(BaseModel):
     organization: str
     orchestration_platform: str
     operating_system: str
+    profile_version: str
+    provenance: str
+    verification_status: str
     tagline: str
     business_domains: list[str]
     modules: dict[str, str]

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, relative } from "node:path";
 
 import { businessTelemetryEnvelope } from "./businessContext.ts";
+import { createEvidenceEnvelope, type AnnabanEvidenceEnvelope } from "./evidenceEnvelope.ts";
 import { GitLedger, sha256, type LedgerEntry } from "./gitLedger.ts";
 
 export type ArtifactPayload = {
@@ -40,6 +41,7 @@ export type TransferReceipt = {
   readyForExecution: true;
   events: TransferEvent[];
   ledgerEntry: LedgerEntry;
+  evidence: AnnabanEvidenceEnvelope;
 };
 
 export interface ArtifactStore {
@@ -144,6 +146,19 @@ export class CodexExecutorNode {
     this.assertIntegrity(packet);
     await this.store.write(packet.path, packet.payload.code);
 
+    const evidence = createEvidenceEnvelope({
+      source: "iaftp.codex_executor",
+      sourceType: "local_artifact_transfer_simulation",
+      provenance: "local-simulation-derived",
+      payload: {
+        packetId: packet.packetId,
+        source: packet.source,
+        destination: packet.destination,
+        artifactPath: packet.path,
+        verification: "integrity_passed",
+      },
+      interpretationStatus: "TRANSFER_EVIDENCE",
+    });
     const ledgerEntry = this.ledger.append({
       event: "FILE_TRANSFER_COMPLETE",
       packetId: packet.packetId,
@@ -156,6 +171,7 @@ export class CodexExecutorNode {
         artifactType: packet.artifactType,
         immutable: packet.flags.immutable,
         requiresReview: packet.flags.requiresReview,
+        evidence,
       }),
     });
 
@@ -167,6 +183,7 @@ export class CodexExecutorNode {
       readyForExecution: true,
       events: [...events],
       ledgerEntry,
+      evidence,
     };
   }
 

@@ -12,6 +12,9 @@ test("fictional RTX Spark session approves low-risk haptics and blocks high-risk
 
   assert.equal(result.business.owner, "Jacob Wayne Kinnaird");
   assert.equal(result.business.organization, "AnnabanAI");
+  assert.equal(result.evidence[0].authorizationStatus, "NOT_AUTHORIZED");
+  assert.equal(result.evidence[1].authorizationStatus, "DENIED");
+  assert.equal(result.evidence[0].humanReviewStatus, "REQUIRED");
   assert.equal(result.summary.approvedActions, 1);
   assert.equal(result.summary.blockedActions, 1);
   assert.equal(result.summary.safetyViolations, 0);
