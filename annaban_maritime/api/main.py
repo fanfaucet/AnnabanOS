@@ -4,10 +4,12 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, status
 
+from annaban_business import get_business_profile
 from annaban_maritime.alignment.evaluator import evaluate_route
 from annaban_maritime.api.schemas import (
     BestRouteRequest,
     BestRouteResponse,
+    BusinessProfileResponse,
     EtaRequest,
     EtaResponse,
     GenerateRoutesRequest,
@@ -25,7 +27,13 @@ from annaban_maritime.core.routing import (
 from annaban_maritime.core.state import MaritimeState
 from annaban_maritime.core.vessel import Vessel
 
-app = FastAPI(title="AnnabanOS Maritime", version="0.2.0")
+business_profile = get_business_profile()
+
+app = FastAPI(
+    title=f"{business_profile.operating_system} Maritime",
+    version="0.2.0",
+    description=f"{business_profile.organization} logistics API for {business_profile.owner}.",
+)
 
 
 def _to_vessel(payload: Any) -> Vessel:
@@ -38,6 +46,13 @@ def _to_state(payload: Any) -> MaritimeState:
 
 def _to_weights(payload: Any) -> RouteScoringWeights:
     return RouteScoringWeights(**payload.model_dump())
+
+
+@app.get("/business/profile", response_model=BusinessProfileResponse)
+def business_profile_endpoint() -> dict[str, object]:
+    """Return the Jacob Wayne Kinnaird business context for this service."""
+
+    return business_profile.as_dict()
 
 
 @app.get("/health", response_model=HealthResponse)

@@ -52,6 +52,21 @@ annaban --prompt "Summarize the operational risks of a delayed shipment" --task-
 - Audit integrity
 - Governance score as an operational composite, not a correctness score
 
+## Jacob Wayne Kinnaird Business Context
+
+AnnabanOS modules are connected to a shared local business profile for Jacob Wayne Kinnaird's AnnabanAI / SparkAI+ stack:
+
+- `annaban_business/profile.py` defines the canonical owner, organization, platform, product tagline, domains, and module map.
+- `GET /business/profile` exposes that profile from the maritime FastAPI service for dashboards and deployment metadata.
+- `src/core/businessContext.ts` tags IAFTP and SparkAI+ simulation ledger metadata with the same business context.
+- `docs/business_integration.md` describes how the profile ties the demos back to the business without embedding private contact details.
+
+Example profile request:
+
+```bash
+curl http://127.0.0.1:8000/business/profile
+```
+
 ## AnnabanOS Maritime Core
 
 AnnabanOS now includes a runnable maritime logistics core under `annaban_maritime/`:

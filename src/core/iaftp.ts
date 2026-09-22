@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, relative } from "node:path";
 
+import { businessTelemetryEnvelope } from "./businessContext.ts";
 import { GitLedger, sha256, type LedgerEntry } from "./gitLedger.ts";
 
 export type ArtifactPayload = {
@@ -151,11 +152,11 @@ export class CodexExecutorNode {
       artifactPath: packet.path,
       status: "success",
       verification: "integrity_passed",
-      metadata: {
+      metadata: businessTelemetryEnvelope({
         artifactType: packet.artifactType,
         immutable: packet.flags.immutable,
         requiresReview: packet.flags.requiresReview,
-      },
+      }),
     });
 
     return {

@@ -2,6 +2,7 @@ import unittest
 
 from fastapi.testclient import TestClient
 
+from annaban_business import get_business_profile
 from annaban_maritime.alignment.evaluator import evaluate_route
 from annaban_maritime.api.main import app
 from annaban_maritime.core.eta import estimate_eta
@@ -90,8 +91,18 @@ class MaritimeCoreTests(unittest.TestCase):
         self.assertFalse(result["approved"])
         self.assertEqual(result["violations"], ["eco_violation", "safety_risk"])
 
+    def test_business_profile_connects_service_to_owner_context(self):
+        profile = get_business_profile()
+        self.assertEqual(profile.owner, "Jacob Wayne Kinnaird")
+        self.assertEqual(profile.organization, "AnnabanAI")
+        self.assertIn("annaban_maritime", profile.modules)
+
     def test_fastapi_maritime_endpoints(self):
         client = TestClient(app)
+        profile_response = client.get("/business/profile")
+        self.assertEqual(profile_response.status_code, 200)
+        self.assertEqual(profile_response.json()["owner"], "Jacob Wayne Kinnaird")
+        self.assertEqual(profile_response.json()["organization"], "AnnabanAI")
         eta_response = client.post(
             "/maritime/eta",
             json={

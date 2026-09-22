@@ -10,6 +10,8 @@ import {
 test("fictional RTX Spark session approves low-risk haptics and blocks high-risk output", () => {
   const result = runFictionalRtxSparkSession();
 
+  assert.equal(result.business.owner, "Jacob Wayne Kinnaird");
+  assert.equal(result.business.organization, "AnnabanAI");
   assert.equal(result.summary.approvedActions, 1);
   assert.equal(result.summary.blockedActions, 1);
   assert.equal(result.summary.safetyViolations, 0);
@@ -19,6 +21,7 @@ test("fictional RTX Spark session approves low-risk haptics and blocks high-risk
   assert.equal(result.hapticOutputs[1].actuatorState, "SAFE");
   assert.equal(result.hapticOutputs[1].frequencyHz, 0);
   assert.equal(result.ledgerEntries.length, 2);
+  assert.equal(result.ledgerEntries[0].metadata.business.orchestrationPlatform, "SparkAI+");
 });
 
 test("policy gate blocks excessive risk before haptic output", () => {

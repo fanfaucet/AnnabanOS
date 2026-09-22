@@ -31,6 +31,8 @@ test("IAFTP packet transfer writes artifact and records verifiable ledger entry"
   assert.equal(await executor.readArtifact("/src/core/gitLedger.ts"), "export class GitLedger {}");
   assert.equal(executor.verifyLedger(), true);
   assert.equal(executor.ledgerEntries().length, 1);
+  assert.equal(executor.ledgerEntries()[0].metadata.business.owner, "Jacob Wayne Kinnaird");
+  assert.equal(executor.ledgerEntries()[0].metadata.business.organization, "AnnabanAI");
   assert.equal(events.length, 3);
 });
 

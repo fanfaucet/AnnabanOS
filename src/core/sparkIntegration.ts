@@ -1,3 +1,4 @@
+import { JACOB_KINNAIRD_BUSINESS, businessTelemetryEnvelope } from "./businessContext.ts";
 import { GitLedger, type LedgerEntry } from "./gitLedger.ts";
 
 export type SparkCapability = "inference" | "vector_search" | "tool_execution";
@@ -52,6 +53,7 @@ export type SparkSessionSummary = {
 };
 
 export type SparkSessionResult = {
+  business: typeof JACOB_KINNAIRD_BUSINESS;
   events: SparkSimulationEvent[];
   hapticOutputs: HapticOutput[];
   ledgerEntries: readonly LedgerEntry[];
@@ -199,6 +201,7 @@ export class RtxSparkIntegrationSimulation {
     });
 
     return {
+      business: JACOB_KINNAIRD_BUSINESS,
       events: this.#events.map((event) => Object.freeze({ ...event, details: { ...event.details } })),
       hapticOutputs: this.#hapticOutputs.map((output) => Object.freeze({ ...output })),
       ledgerEntries: this.#ledger.entries(),
@@ -221,11 +224,11 @@ export class RtxSparkIntegrationSimulation {
       artifactPath: "fictional://rtx-spark/session",
       status: decision.status,
       verification: decision.status === "approved" ? "policy_passed" : "policy_blocked",
-      metadata: {
+      metadata: businessTelemetryEnvelope({
         reason: decision.reason,
         telemetry,
         hapticOutput,
-      },
+      }),
     });
 
     this.#events.push({

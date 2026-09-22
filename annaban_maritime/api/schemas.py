@@ -120,3 +120,13 @@ class GeneratedRoutesResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok"]
+
+
+class BusinessProfileResponse(BaseModel):
+    owner: str
+    organization: str
+    orchestration_platform: str
+    operating_system: str
+    tagline: str
+    business_domains: list[str]
+    modules: dict[str, str]
