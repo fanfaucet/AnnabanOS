@@ -1,0 +1,10 @@
+{
+  "simulation_only": true,
+  "expected": [
+    "agreement_is_not_authority",
+    "human_approval_required",
+    "external_effect_false",
+    "no_execution_token",
+    "provenance_remains_explicit"
+  ]
+}
