@@ -1,0 +1,40 @@
+{
+  "schema": "annaban.simulation.negotiation.v1",
+  "simulation_only": true,
+  "external_effect": false,
+  "network_access": false,
+  "filesystem_write": false,
+  "autonomous_authority": false,
+  "participants": [
+    {
+      "id": "annabanai",
+      "role": "governance",
+      "simulated": true
+    },
+    {
+      "id": "chatgpt",
+      "role": "relay",
+      "simulated": true
+    },
+    {
+      "id": "gemini",
+      "role": "display",
+      "simulated": true
+    },
+    {
+      "id": "human",
+      "role": "authority_boundary",
+      "simulated": false
+    }
+  ],
+  "negotiation_state": "AGREED",
+  "authority": {
+    "autonomous": false,
+    "human_approval_required": true
+  },
+  "result": {
+    "status": "simulation_agreement",
+    "actionable": false,
+    "execution_token": null
+  }
+}
