@@ -6,6 +6,7 @@ from annaban_benchmark.governance import (
     InvalidTransition,
     ReplayDetected,
     RoleViolation,
+    StaleTransition,
     State,
     TransitionAuthority,
     Workflow,
@@ -117,7 +118,7 @@ class SignedGovernanceTests(unittest.TestCase):
             to_state=State.REQUEST_ISSUED,
             now=1_700_000_000 - 301,
         )
-        with self.assertRaises(Exception):
+        with self.assertRaises(StaleTransition):
             self.workflow.apply(transition)
 
 
