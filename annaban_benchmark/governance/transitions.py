@@ -102,6 +102,8 @@ class SignedTransition:
     actor_claim: str
     actor_key_id: str
     role: str
+    jurisdiction: str
+    visibility_scope: str
     request_hash: str | None
     output_hash: str | None
     action_key: str | None
@@ -120,6 +122,8 @@ class SignedTransition:
             "actor_claim": self.actor_claim,
             "actor_key_id": self.actor_key_id,
             "role": self.role,
+            "jurisdiction": self.jurisdiction,
+            "visibility_scope": self.visibility_scope,
             "request_hash": self.request_hash,
             "output_hash": self.output_hash,
             "action_key": self.action_key,
@@ -139,27 +143,35 @@ def _sha256(value: Mapping[str, Any]) -> str:
 
 
 class TransitionAuthority:
-    """Ed25519 key registry and verifier for security-relevant state changes."""
+    """Ed25519 public-key registry and verifier for security-relevant state changes.
+
+    This registry deliberately retains no private keys.  In particular, human
+    approval keys remain with their human-controlled signer rather than with
+    the service that verifies workflow transitions.
+    """
 
     def __init__(self) -> None:
-        self._private: dict[str, Ed25519PrivateKey] = {}
         self._public: dict[str, Ed25519PublicKey] = {}
         self._roles: dict[str, str] = {}
 
-    def generate(self, key_id: str, role: str) -> None:
-        key = Ed25519PrivateKey.generate()
-        self._private[key_id] = key
-        self._public[key_id] = key.public_key()
+    def register_public_key(self, key_id: str, role: str, public_key: Ed25519PublicKey) -> None:
+        """Register a public verification key owned by an external signer."""
+        if key_id in self._public:
+            raise InvalidSignature("verification key already registered")
+        self._public[key_id] = public_key
         self._roles[key_id] = role
 
     def sign(
         self,
         key_id: str,
         *,
+        signing_key: Ed25519PrivateKey,
         workflow_id: str,
         from_state: State,
         to_state: State,
         actor_claim: str,
+        jurisdiction: str,
+        visibility_scope: str,
         request_hash: str | None = None,
         output_hash: str | None = None,
         action_key: str | None = None,
@@ -168,11 +180,17 @@ class TransitionAuthority:
         now: int | None = None,
         nonce: str | None = None,
     ) -> SignedTransition:
-        if key_id not in self._private:
-            raise InvalidSignature("unknown signing key")
+        if key_id not in self._public:
+            raise InvalidSignature("unknown verification key")
         role = self._roles[key_id]
         if ROLE_FOR_STATE.get(to_state) != role:
             raise RoleViolation(f"{role} cannot authorize transition to {to_state.value}")
+        if not actor_claim:
+            raise RoleViolation("actor claim is required")
+        if not jurisdiction or not visibility_scope:
+            raise InvalidTransition("jurisdiction and visibility scope are required")
+        if signing_key.public_key().public_bytes_raw() != self._public[key_id].public_bytes_raw():
+            raise InvalidSignature("signing key does not match registered verification key")
 
         transition = SignedTransition(
             transition_id=str(uuid.uuid4()),
@@ -182,6 +200,8 @@ class TransitionAuthority:
             actor_claim=actor_claim,
             actor_key_id=key_id,
             role=role,
+            jurisdiction=jurisdiction,
+            visibility_scope=visibility_scope,
             request_hash=request_hash,
             output_hash=output_hash,
             action_key=action_key,
@@ -191,12 +211,14 @@ class TransitionAuthority:
             evidence=dict(evidence or {}),
             signature="",
         )
-        signature = self._private[key_id].sign(_canonical(transition.unsigned_payload()))
+        signature = signing_key.sign(_canonical(transition.unsigned_payload()))
         return SignedTransition(**transition.unsigned_payload(), signature=base64.b64encode(signature).decode("ascii"))
 
     def verify(self, transition: SignedTransition, *, expected_workflow_id: str, now: int | None = None, max_skew: int = 300) -> None:
         if transition.workflow_id != expected_workflow_id:
             raise InvalidSignature("workflow_id mismatch")
+        if not transition.jurisdiction or not transition.visibility_scope:
+            raise InvalidTransition("jurisdiction and visibility scope are required")
         try:
             from_state = State(transition.from_state)
             to_state = State(transition.to_state)
@@ -225,14 +247,25 @@ class TransitionAuthority:
 class Workflow:
     """Workflow that cannot advance without a valid signed transition."""
 
-    def __init__(self, authority: TransitionAuthority, workflow_id: str | None = None, *, clock=None) -> None:
+    def __init__(
+        self,
+        authority: TransitionAuthority,
+        workflow_id: str | None = None,
+        *,
+        jurisdiction: str,
+        visibility_scope: str,
+        clock=None,
+    ) -> None:
         self.authority = authority
         self.workflow_id = workflow_id or str(uuid.uuid4())
         self.state = State.INGRESS
+        self.jurisdiction = jurisdiction
+        self.visibility_scope = visibility_scope
         self.clock = clock or (lambda: int(time.time()))
         self._used_transition_ids: set[str] = set()
         self._used_nonces: set[str] = set()
         self.history: list[SignedTransition] = []
+        self._approval_bindings: dict[str, str | None] | None = None
 
     def apply(self, transition: SignedTransition) -> State:
         self.authority.verify(
@@ -240,14 +273,23 @@ class Workflow:
             expected_workflow_id=self.workflow_id,
             now=self.clock(),
         )
+        if transition.jurisdiction != self.jurisdiction or transition.visibility_scope != self.visibility_scope:
+            raise BindingMismatch("transition jurisdiction or visibility scope does not match workflow")
         if transition.transition_id in self._used_transition_ids or transition.nonce in self._used_nonces:
             raise ReplayDetected("transition or nonce already used")
         if transition.from_state != self.state.value:
             raise InvalidTransition("signed from_state does not match workflow state")
+        target_state = State(transition.to_state)
+        if target_state in {State.AUTHORIZED, State.DENIED, State.EXECUTED}:
+            if self._approval_bindings is None:
+                raise BindingMismatch("no approval binding is available")
+            self.bind_matches(transition, self._approval_bindings)
         self._used_transition_ids.add(transition.transition_id)
         self._used_nonces.add(transition.nonce)
-        self.state = State(transition.to_state)
+        self.state = target_state
         self.history.append(transition)
+        if self.state == State.APPROVAL_PENDING:
+            self._approval_bindings = self._transition_bindings(transition)
         return self.state
 
     def bind_matches(self, transition: SignedTransition, bindings: Mapping[str, str | None]) -> bool:
@@ -255,6 +297,15 @@ class Workflow:
             if getattr(transition, field) != expected:
                 raise BindingMismatch(f"{field} does not match approved value")
         return True
+
+    @staticmethod
+    def _transition_bindings(transition: SignedTransition) -> dict[str, str | None]:
+        return {
+            "request_hash": transition.request_hash,
+            "output_hash": transition.output_hash,
+            "action_key": transition.action_key,
+            "display_sha256": transition.display_sha256,
+        }
 
     def apply_bound(
         self,
