@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any
 
 import pytest
@@ -33,17 +32,15 @@ def test_base_agent_rejects_empty_name():
 
 
 def test_base_agent_preserves_model():
-    agent = DummyAgent("test", "key", "test-model")
-    assert agent.model == "test-model"
+    assert DummyAgent("test", "key", "test-model").model == "test-model"
 
 
 def test_negative_token_estimate_is_rejected():
-    agent = DummyAgent("test", "key")
     with pytest.raises(ValueError):
-        agent.estimate_cost(-1)
+        DummyAgent("test", "key").estimate_cost(-1)
 
 
-def test_openai_adapter_uses_current_responses_interface(monkeypatch):
+def test_openai_adapter_uses_responses_interface():
     agent = OpenAIAgent("openai", "test-key", "test-model")
 
     class FakeResponse:
@@ -61,16 +58,16 @@ def test_openai_adapter_uses_current_responses_interface(monkeypatch):
         responses = FakeResponses()
 
     agent.client = FakeClient()
-
     result = agent.send_request("hello", max_output_tokens=32)
 
-    assert result["text"] == "hello"
-    assert result["response_id"] == "resp_test"
-    assert result["provider"] == "openai"
-    assert result["model"] == "test-model"
+    assert result == {
+        "text": "hello",
+        "response_id": "resp_test",
+        "provider": "openai",
+        "model": "test-model",
+    }
 
 
 def test_openai_cost_rejects_negative_tokens():
-    agent = OpenAIAgent("openai", "test-key")
     with pytest.raises(ValueError):
-        agent.estimate_cost(-1)
+        OpenAIAgent("openai", "test-key").estimate_cost(-1)
