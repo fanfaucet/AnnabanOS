@@ -74,6 +74,10 @@ class PrintfulMockupClientTests(unittest.TestCase):
         changed["design_version"] = "v2"
         with self.assertRaises(ApprovalRequired):
             client.create_mockup_task(changed, approved())
+        changed_payload = request()
+        changed_payload["payload"]["variant_ids"] = [9999]
+        with self.assertRaises(ApprovalRequired):
+            client.create_mockup_task(changed_payload, approved())
         self.assertEqual(transport.calls, [])
 
     def test_approved_request_creates_task(self):
