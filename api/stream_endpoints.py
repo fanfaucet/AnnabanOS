@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from aggregator import stream_aggregate
+from llm_agents.annaban_demo_agent import AnnabanDemoAgent
 from llm_agents.anthropic_agent import AnthropicAgent
 from llm_agents.community_provider_agent import CommunityProviderAgent
 from llm_agents.openai_agent import OpenAIAgent
@@ -15,6 +16,13 @@ router = APIRouter(prefix="/stream", tags=["streaming"])
 
 
 def _build_agents(provider_ids: list[str] | None = None) -> dict[str, object]:
+    requested = list(dict.fromkeys(provider_ids or []))
+
+    # Selecting Annaban explicitly runs the local demo by itself: no API keys,
+    # external model calls, or fan-out to other providers.
+    if "annaban-demo" in requested:
+        return {"annaban-demo": AnnabanDemoAgent()}
+
     agents: dict[str, object] = {}
 
     openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -26,7 +34,7 @@ def _build_agents(provider_ids: list[str] | None = None) -> dict[str, object]:
         agents["anthropic"] = AnthropicAgent(name="anthropic", api_key=anthropic_api_key)
 
     # Community endpoints receive prompts only when the caller explicitly opts in.
-    for provider_id in dict.fromkeys(provider_ids or []):
+    for provider_id in requested:
         provider = community_provider_registry.get(provider_id)
         if provider is not None:
             agents[f"community:{provider.provider_id}"] = CommunityProviderAgent(
@@ -46,11 +54,11 @@ async def stream_business_events(task: dict) -> StreamingResponse:
 
     async def merged_stream() -> AsyncIterator[str]:
         if not agents:
-            yield f"data: {json.dumps({'error': 'No LLM providers configured or selected'})}\n\n"
+            yield f"data: {json.dumps({'error': 'No LLM providers configured or selected'})}\\n\\n"
             return
 
         agent_streams = {name: agent.stream_request(prompt) for name, agent in agents.items()}
         async for chunk in stream_aggregate(agent_streams):
-            yield f"data: {json.dumps(chunk)}\n\n"
+            yield f"data: {json.dumps(chunk)}\\n\\n"
 
     return StreamingResponse(merged_stream(), media_type="text/event-stream")
