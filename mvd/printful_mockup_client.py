@@ -126,6 +126,18 @@ class PrintfulMockupClient:
         payload = request.get("payload")
         if not isinstance(payload, dict) or not payload:
             raise ValueError("request.payload must contain the version-specific Printful task payload")
+        # Bind the actual provider payload to the same product/variants that were approved.
+        payload_product = payload.get("catalog_product_id", payload.get("product_id"))
+        if payload_product is not None and str(payload_product) != str(request.get("product_id")):
+            raise ApprovalRequired("Printful payload product ID differs from approved product")
+        payload_variants = payload.get("variant_ids")
+        if payload_variants is not None:
+            try:
+                normalized_payload_variants = tuple(int(value) for value in payload_variants)
+            except (TypeError, ValueError) as exc:
+                raise ApprovalRequired("Printful payload variant IDs are invalid") from exc
+            if normalized_payload_variants != approval.variant_ids:
+                raise ApprovalRequired("Printful payload variant IDs differ from approved variants")
         response = self._request("POST", "/v2/mockup-tasks", payload)
         task_id = self._extract_task_id(response)
         if not task_id:
