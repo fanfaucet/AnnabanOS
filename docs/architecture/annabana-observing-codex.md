@@ -1,15 +1,15 @@
-# Cross-Reference: AnnabanA* Observing Annaban–Codex Interaction
+# Cross-Reference: AnnabanAI Observing Annaban–Codex Interaction
 
 **Owner / Lead Originator:** Jacob Wayne Kinnaird  
 **Framework:** AnnabanOS / AnnabanAI / Heritage Stack™  
 **Related work:** PR #12 Human Authority Gate MVD; PR #13 Faucet Fan × Printful mock-up integration MVD  
-**Status:** Architecture cross-reference and observation contract; not evidence that a live AnnabanA*–Codex runtime connection is deployed.
+**Status:** Architecture cross-reference and observation contract; not evidence that a live AnnabanAI–Codex runtime connection is deployed.
 
 ## 1. Purpose
 
-Describe how AnnabanA* may observe and record a coding session in which Annaban interacts with Codex, while preserving the distinction between observation, recommendation, authorization, and repository mutation.
+Describe how AnnabanAI may observe and record a coding session in which Annaban interacts with Codex, while preserving the distinction between observation, recommendation, authorization, and repository mutation.
 
-AnnabanA* is treated here as an observation/orchestration layer in the proposed architecture. Codex is treated as a coding agent that can inspect or change code when explicitly given the relevant tool access. The integration must not infer that an action occurred merely because a prompt requested it; it should use verifiable tool results, repository events, diffs, test output, and commit identifiers.
+AnnabanAI is treated here as an observation/orchestration layer in the proposed architecture. Codex is treated as a coding agent that can inspect or change code when explicitly given the relevant tool access. The integration must not infer that an action occurred merely because a prompt requested it; it should use verifiable tool results, repository events, diffs, test output, and commit identifiers.
 
 ## 2. Reference flow
 
@@ -20,7 +20,7 @@ Jacob Wayne Kinnaird (human authority)
 Annaban / AnnabanAI (request framing and bounded coordination)
                 |
                 v
-AnnabanA* (observation, correlation, policy checks, audit events)
+AnnabanAI (observation, correlation, policy checks, audit events)
                 |
                 v
 Codex (code analysis or proposed repository changes)
@@ -29,7 +29,7 @@ Codex (code analysis or proposed repository changes)
 Tool / Git provider result (diff, checks, commit, PR state)
                 |
                 v
-AnnabanA* observation record + AnnabanOS audit trail
+AnnabanAI observation record + AnnabanOS audit trail
                 |
                 v
 Human review and explicit approval for consequential changes
@@ -64,7 +64,7 @@ Do not store API tokens, private keys, session cookies, or unrelated customer da
 | Open or update a pull request | Record the confirmed PR URL, state, head SHA, and draft status |
 | Merge a pull request | Separate, explicit human authorization; never infer permission from approval to create a draft PR |
 | Change production configuration, publish products, or submit paid orders | Separate authorization scope and explicit approval; out of scope for this observer |
-| Revoke or disable access | Must use the real provider's supported control surface; AnnabanA* cannot revoke permissions it does not control |
+| Revoke or disable access | Must use the real provider's supported control surface; AnnabanAI cannot revoke permissions it does not control |
 
 An approval is scoped to a specific action and payload. Approval to generate a Printful mock-up does not authorize a Shopify listing, paid order, Git merge, or unrelated code change.
 
@@ -78,7 +78,7 @@ PR #13 provides a practical example of a staged workflow:
 4. Human review of the generated preview.
 5. A separate approval for any later Shopify publication.
 
-AnnabanA* could observe this workflow by correlating approval IDs, task IDs, asset checksums, repository commits, and pull request status. It must not claim the Printful or Shopify steps occurred unless the corresponding provider response or audit evidence exists.
+AnnabanAI could observe this workflow by correlating approval IDs, task IDs, asset checksums, repository commits, and pull request status. It must not claim the Printful or Shopify steps occurred unless the corresponding provider response or audit evidence exists.
 
 Repository cross-reference: https://github.com/fanfaucet/AnnabanOS/pull/13
 
@@ -105,7 +105,7 @@ Failure paths include `APPROVAL_DENIED`, `TOOL_FAILED`, `EVIDENCE_MISSING`, `RES
 
 ## 8. Implementation plan
 
-1. Define a typed event schema and a correlation ID shared across the AnnabanA* observer and repository adapter.
+1. Define a typed event schema and a correlation ID shared across the AnnabanAI observer and repository adapter.
 2. Add a read-only observer first: consume tool results and Git provider metadata without changing repositories.
 3. Add policy evaluation that maps each requested action to a permission scope and approval requirement.
 4. Record sanitized, append-oriented audit events with stable evidence references.
@@ -115,7 +115,7 @@ Failure paths include `APPROVAL_DENIED`, `TOOL_FAILED`, `EVIDENCE_MISSING`, `RES
 
 ## 9. Non-claims
 
-This cross-reference does not establish that AnnabanA* is a deployed service, that Codex has been connected to AnnabanOS, that the audit log is immutable, or that any external vendor has endorsed the architecture. Those claims require implementation evidence and independent verification.
+This cross-reference does not establish that AnnabanAI is a deployed service, that Codex has been connected to AnnabanOS, that the audit log is immutable, or that any external vendor has endorsed the architecture. Those claims require implementation evidence and independent verification.
 
 
 ## 10. Simulated Mistral peer and implementation code notes
