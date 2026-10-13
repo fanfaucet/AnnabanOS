@@ -1,7 +1,7 @@
 # Code Notes: AnnabanAI Observing Annaban–Codex Work with a Simulated Mistral Peer
 
 **Originator:** Jacob Wayne Kinnaird  
-**Related implementation:** [AnnabanA* observation contract](./annabana-observing-codex.md), [Printful mock-up MVD](../integrations/printful-faucet-fan-mockup-mvd.md), [prototype client](../../mvd/printful_mockup_client.py)  
+**Related implementation:** [AnnabanAI observation contract](./annabana-observing-codex.md), [Printful mock-up MVD](../integrations/printful-faucet-fan-mockup-mvd.md), [prototype client](../../mvd/printful_mockup_client.py)  
 **Status:** Design and simulation notes only. No live AnnabanAI–Codex runtime bridge or Mistral API session is established by this document.
 
 ## Purpose
@@ -31,7 +31,7 @@ Illustrative JSON record shape (not an implemented schema):
 
     {
       "interaction_id": "example-correlation-id",
-      "observer": "AnnabanA*",
+      "observer": "AnnabanAI",
       "coordinator": "AnnabanAI",
       "observed_agent": "Codex",
       "peer_review": {
