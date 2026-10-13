@@ -113,14 +113,6 @@ A run is acceptable only when:
 - Failed, uncertain, and untested cases remain visible; no dashboard label implies physical validation that has not occurred.
 - No physical operating limit is promoted from an illustrative simulation value without traceable engineering evidence.
 
-A run is acceptable only when:
-- Units, timestamps, sensor source, quality, and model version are present.
-- Motor RPM and cooling-fan RPM are stored and evaluated independently.
-- Numerical integration and current/voltage constraints are tested, including non-zero electrical dynamics where expected.
-- Residuals are normalized or dimensionally separated; unlike units are not combined into an unexplained scalar threshold.
-- State transitions are reproducible from recorded inputs.
-- Soft-limit recommendations and hard-protection requests are distinct and auditable.
-- Failed, uncertain, and untested cases remain visible; no dashboard label implies physical validation that has not occurred.
 
 ## 9. Proposed architecture
 
