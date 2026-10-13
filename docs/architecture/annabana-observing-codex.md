@@ -116,3 +116,10 @@ Failure paths include `APPROVAL_DENIED`, `TOOL_FAILED`, `EVIDENCE_MISSING`, `RES
 ## 9. Non-claims
 
 This cross-reference does not establish that AnnabanA* is a deployed service, that Codex has been connected to AnnabanOS, that the audit log is immutable, or that any external vendor has endorsed the architecture. Those claims require implementation evidence and independent verification.
+
+
+## 10. Simulated Mistral peer and implementation code notes
+
+The companion note [AnnabanAI Codex and simulated Mistral code notes](./annabanai-codex-mistral-simulation-notes.md) records a proposed scenario in which Annaban is observed using AnnabanAI to coordinate with Codex, with a clearly labeled simulated Mistral AI review. The Mistral review is a deterministic simulation fixture, not evidence of a live Mistral API call. Treat peer output as advisory; only provider-returned repository evidence can confirm a file change, commit, test run, or pull request update. Human approval remains separately scoped to consequential changes.
+
+This cross-reference adds documentation only. It does not implement or establish a live AnnabanAI observer, Codex bridge, or Mistral adapter.
