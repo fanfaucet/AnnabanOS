@@ -4,7 +4,7 @@ from typing import Dict
 
 from .consensus import ConsensusEngine
 from .cost import CostTracker
-from .datasets import load_dataset
+from .datasets.loader import load_dataset
 from .metrics import governance_score
 from .router import LatencyAwareRouter
 
@@ -12,7 +12,8 @@ from .router import LatencyAwareRouter
 class BenchmarkHarness:
     """Runs reproducible operational evaluations without deciding output truth."""
 
-    def __init__(self):
+    def __init__(self, dataset_path: str | None = None):
+        self.dataset_path = dataset_path
         self.router = LatencyAwareRouter()
         self.consensus = ConsensusEngine()
         self.cost = CostTracker()
@@ -49,11 +50,22 @@ class BenchmarkHarness:
         }
 
     async def run_benchmark(self) -> Dict:
-        dataset = load_dataset()
+        dataset = load_dataset(self.dataset_path)
 
         results = []
         for task in dataset:
             results.append(await self.run_single(task))
+
+        if not results:
+            return {
+                "tasks": 0,
+                "avg_policy_pass": 0.0,
+                "avg_cost": 0.0,
+                "avg_agreement_signal": 0.0,
+                "avg_audit_integrity": 1.0,
+                "annaban_governance_score": 0.0,
+                "note": "No benchmark tasks were loaded.",
+            }
 
         avg_policy_pass = sum(r["policy_pass"] for r in results) / len(results)
         avg_cost = sum(r["cost"] for r in results) / len(results)

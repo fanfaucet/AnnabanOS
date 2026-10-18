@@ -1,0 +1,13 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish placeholder
+        run: echo "Publishing is intentionally manual until package credentials are configured."

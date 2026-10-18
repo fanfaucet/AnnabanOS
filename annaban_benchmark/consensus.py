@@ -36,3 +36,8 @@ class ConsensusEngine:
             "stability": stability,
             "note": "Agreement is a routing/audit signal and is not a truth judgment.",
         }
+
+
+def agreement_score(outputs) -> float:
+    """Return the advisory agreement ratio for benchmark outputs."""
+    return ConsensusEngine().evaluate(outputs).get("agreement_ratio", 0.0)
