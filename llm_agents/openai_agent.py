@@ -7,9 +7,10 @@ from .base_agent import BaseAgent
 
 
 class OpenAIAgent(BaseAgent):
+    provider = "openai"
+
     def __init__(self, name: str, api_key: str, model: str = "gpt-4o-mini"):
-        super().__init__(name=name, api_key=api_key)
-        self.model = model
+        super().__init__(name=name, api_key=api_key, model=model)
         self.client = OpenAI(api_key=api_key)
         self.async_client = AsyncOpenAI(api_key=api_key)
 
@@ -22,6 +23,8 @@ class OpenAIAgent(BaseAgent):
         return {
             "text": response.output_text,
             "response_id": response.id,
+            "provider": self.provider,
+            "model": kwargs.get("model", self.model),
         }
 
     async def stream_request(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
@@ -36,4 +39,6 @@ class OpenAIAgent(BaseAgent):
                 yield event.delta
 
     def estimate_cost(self, tokens: int) -> float:
+        if tokens < 0:
+            raise ValueError("tokens must be non-negative.")
         return tokens * 0.0000006
