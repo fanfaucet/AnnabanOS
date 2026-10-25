@@ -7,11 +7,9 @@ Tests use an injected transport and do not call live APIs.
 
 from __future__ import annotations
 
-import base64
 import hashlib
 import json
 import os
-import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
 from typing import Any, Callable
@@ -179,9 +177,6 @@ class GitRepositoryExtension:
                 jurisdiction_id=snapshot.jurisdiction_id,
                 visibility=snapshot.visibility,
             ))
-        for finding in findings:
-            # Keep output grounded in the observed snapshot and scoped for audit.
-            _ = snapshot.snapshot_sha256
         return findings
 
     def observe(self, **scope: str) -> dict[str, Any]:
