@@ -1,11 +1,13 @@
-"""AnnabanOS simulation components for AetherOS integration.
-
-This package provides boot, execution, and automation bridges that are
-intentionally scoped to simulation and advisory modes only.
-"""
+"""AnnabanOS simulation components and read-only extensions."""
 
 from annabanos.boot import AnnabanBootSimulator
 from annabanos.execution import AnnabanExecutionEngine
 from annabanos.integration import AnnabanAIAutomationBridge
+from annabanos.extensions.git import GitRepositoryExtension
 
-__all__ = ["AnnabanBootSimulator", "AnnabanExecutionEngine", "AnnabanAIAutomationBridge"]
+__all__ = [
+    "AnnabanBootSimulator",
+    "AnnabanExecutionEngine",
+    "AnnabanAIAutomationBridge",
+    "GitRepositoryExtension",
+]
