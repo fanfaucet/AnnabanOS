@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from collections.abc import AsyncIterator
 from contextlib import suppress
 from typing import Any
@@ -28,7 +29,11 @@ async def _forward_stream(
         )
     finally:
         with suppress(Exception):
-            await stream.aclose()
+            close = getattr(stream, "aclose", None) or getattr(stream, "close", None)
+            if close is not None:
+                result = close()
+                if inspect.isawaitable(result):
+                    await result
         # The queue is unbounded, so completion signaling cannot block here.
         await queue.put(None)
 
