@@ -41,14 +41,14 @@ async def stream_business_events(task: dict[str, Any]) -> StreamingResponse | JS
 
     async def merged_stream() -> AsyncIterator[str]:
         if not agents:
-            yield f"data: {json.dumps({'error': {'type': 'configuration_error', 'message': 'No supported LLM providers configured'}})}\\n\\n"
+            yield f"data: {json.dumps({'error': {'type': 'configuration_error', 'message': 'No supported LLM providers configured'}})}\n\n"
             return
 
         agent_streams = {
             name: agent.stream_request(prompt) for name, agent in agents.items()
         }
         async for chunk in stream_aggregate(agent_streams):
-            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\\n\\n"
+            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
         merged_stream(),
