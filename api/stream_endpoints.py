@@ -23,7 +23,7 @@ def _build_agents() -> dict[str, Any]:
     return agents
 
 
-@router.post("/business")
+@router.post("/business", response_model=None)
 async def stream_business_events(task: dict[str, Any]) -> StreamingResponse | JSONResponse:
     prompt = task.get("prompt")
     if not isinstance(prompt, str) or not prompt.strip():
