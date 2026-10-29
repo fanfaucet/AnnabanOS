@@ -98,7 +98,7 @@ class StreamingAggregatorTests(unittest.IsolatedAsyncioTestCase):
             body = "".join([chunk async for chunk in response.body_iterator])
 
         self.assertIn("configuration_error", body)
-        self.assertIn("\\n\\n", repr(body))
+        self.assertTrue(body.endswith("\n\n"))
 
 
 if __name__ == "__main__":
