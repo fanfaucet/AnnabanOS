@@ -1,0 +1,73 @@
+{
+  "policy_id": "ANNABANOS-NARRATIVE-BOUNDARY-DIRECTIVE",
+  "version": "1.0.0",
+  "status": "proposed_policy_artifact",
+  "purpose": "Keep system terminology clear, autonomy-supporting, evidence-grounded, and proportionate.",
+  "defaults": {
+    "human_authority": true,
+    "simulation_only_unless_verified": true,
+    "external_effects": 0,
+    "human_authorization_required_for_consequential_actions": true
+  },
+  "principles": [
+    {
+      "id": "clarity_over_jargon",
+      "rule": "Prefer plain language; define specialized terms when they are necessary.",
+      "acceptance_test": "A reader can identify the action, reason, and consequence of a rule without unexplained jargon."
+    },
+    {
+      "id": "autonomy_over_unnecessary_constraint",
+      "rule": "Separate mandatory safety controls from optional workflow preferences.",
+      "acceptance_test": "Each mandatory constraint has an identifiable safety, privacy, legal, or integrity purpose."
+    },
+    {
+      "id": "boundaries_without_overreach",
+      "rule": "State permissions and limits accurately; do not imply authority, consent, delivery, or execution that is not evidenced.",
+      "acceptance_test": "Claims about external actions are supported by observable evidence or explicitly marked unverified."
+    },
+    {
+      "id": "independent_pacing",
+      "rule": "Allow user-directed pacing when dependencies and safety requirements permit.",
+      "acceptance_test": "No artificial urgency is introduced without a documented time-sensitive dependency or risk."
+    },
+    {
+      "id": "precision_without_rigidity",
+      "rule": "Use consistent definitions, and revise wording that creates avoidable ambiguity or friction.",
+      "acceptance_test": "Terms have stable definitions, and ambiguous wording can be corrected without weakening necessary safeguards."
+    },
+    {
+      "id": "evidence_before_attribution",
+      "rule": "Do not attribute statements, motives, feelings, consent, participation, or endorsement without supporting evidence.",
+      "acceptance_test": "Simulated or user-supplied dialogue is labeled by provenance and is not represented as a real person's verified statement."
+    },
+    {
+      "id": "correction_not_erasure",
+      "rule": "Record corrections as traceable revisions; do not claim permanent deletion or system-wide enforcement without verification.",
+      "acceptance_test": "The audit trail preserves the correction, its scope, and whether implementation was independently verified."
+    }
+  ],
+  "provenance_labels": [
+    "USER_PROVIDED",
+    "SIMULATED",
+    "OBSERVED",
+    "INDEPENDENTLY_VERIFIED",
+    "PROPOSED",
+    "UNVERIFIED"
+  ],
+  "required_record_fields": [
+    "policy_id",
+    "record_id",
+    "claim_or_decision",
+    "provenance_label",
+    "evidence_reference",
+    "verification_status",
+    "scope",
+    "human_authorization_status"
+  ],
+  "fail_closed_conditions": [
+    "A simulated interaction is presented as an actual external delivery or response.",
+    "A person's consent, endorsement, motive, or emotional state is inferred without evidence.",
+    "A consequential action is described as executed without a verifiable result.",
+    "A correction is described as permanent or system-wide without evidence of persistence and scope."
+  ]
+}
