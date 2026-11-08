@@ -30,4 +30,4 @@ jobs:
         env:
           ANNABAN_INTERNAL_API_TOKEN: ci-test-token-not-for-production
           ANNABAN_EVENT_DB: ./test-events.sqlite3
-        run: pytest -q tests/test_internal_api.py
+        run: pytest -q tests/test_internal_api.py tests/test_annaban_boundary.py
