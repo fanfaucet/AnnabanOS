@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "internal_api/**"
+      - "annaban_boundary/**"
+      - "tests/**"
       - ".github/workflows/internal-api-tests.yml"
   workflow_dispatch:
 
