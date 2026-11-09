@@ -37,6 +37,8 @@ class CrossModelResult:
     agreement: bool
     agreement_meaning: str = "text equality only; not evidence of truth"
     external_effects_enabled: bool = False
+    human_authorization_required: bool = True
+    human_authorization_present: bool = False
 
 def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -88,6 +90,8 @@ class ChatCompletionsAdapter:
             content = choices[0].get("message", {}).get("content")
             if not isinstance(content, str):
                 raise ProviderError("provider response has no text content")
+            if not content.strip():
+                raise ProviderError("provider returned empty or whitespace-only text content")
             return ModelReply(self.provider, self.model, headers.get("x-request-id") or data.get("id"),
                               "SUCCESS", content, sha256_text(content),
                               int((time.monotonic() - started) * 1000))
@@ -190,13 +194,18 @@ def cross_model_exchange(prompt: str, *, adapters: list[ChatCompletionsAdapter],
                                               "overall exchange timeout"))
     replies.sort(key=lambda item: item.provider)
     successful = [item for item in replies if item.status == "SUCCESS"]
-    agreement = len(successful) == len(adapters) and len({item.content_sha256 for item in successful}) == 1
-    status = "AGREED_TEXT" if agreement else ("SAFE_HOLD" if len(successful) != len(adapters) else "DIVERGENT")
+    complete = [item for item in successful if isinstance(item.content, str) and item.content.strip()]
+    all_complete = len(complete) == len(adapters) and len(successful) == len(adapters)
+    agreement = all_complete and len({item.content_sha256 for item in complete}) == 1
+    status = "AGREED_TEXT" if agreement else ("SAFE_HOLD" if not all_complete else "DIVERGENT")
     result = CrossModelResult(exchange_id, status, tuple(replies), agreement,
-                              external_effects_enabled=False)
+                              external_effects_enabled=False, human_authorization_required=True,
+                              human_authorization_present=False)
     audit.append({"event_type": "cross_model_exchange", "exchange_id": exchange_id, "status": status,
         "prompt_sha256": sha256_text(prompt), "providers": [
             {"provider": r.provider, "model": r.model, "request_id": r.request_id, "status": r.status,
              "content_sha256": r.content_sha256, "latency_ms": r.latency_ms, "error": r.error} for r in replies],
-        "agreement_meaning": "exact text equality only; not truth", "external_effects_enabled": False})
+        "agreement_meaning": "exact text equality only; not evidence of truth",
+        "external_effects_enabled": False, "human_authorization_required": True,
+        "human_authorization_present": False})
     return result
