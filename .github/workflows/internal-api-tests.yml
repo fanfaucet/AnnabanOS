@@ -5,7 +5,8 @@ on:
     paths:
       - "internal_api/**"
       - "annaban_boundary/**"
-      - "tests/**"
+      - "tests/test_internal_api.py"
+      - "tests/test_annaban_boundary.py"
       - ".github/workflows/internal-api-tests.yml"
   workflow_dispatch:
 
@@ -30,4 +31,4 @@ jobs:
         env:
           ANNABAN_INTERNAL_API_TOKEN: ci-test-token-not-for-production
           ANNABAN_EVENT_DB: ./test-events.sqlite3
-        run: pytest -q tests/test_internal_api.py tests/test_annaban_boundary.py
+        run: python -m pytest -q tests/test_internal_api.py tests/test_annaban_boundary.py
