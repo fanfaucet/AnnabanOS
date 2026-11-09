@@ -1,0 +1,29 @@
+name: Annaban SDK tests
+
+on:
+  push:
+    branches:
+      - feature/annaban-sdk-components
+  pull_request:
+    paths:
+      - "annaban_sdk/**"
+      - "tests/test_annaban_sdk.py"
+      - ".github/workflows/annaban-sdk-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sdk-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run SDK unit tests
+        run: python -m unittest discover -s tests -p 'test_annaban_sdk.py' -v
+      - name: Compile SDK and tests
+        run: python -m compileall -q annaban_sdk tests
