@@ -1,0 +1,29 @@
+name: Live cross-model adapter tests
+on:
+  push:
+    branches:
+      - feature/live-cross-model-communication
+  pull_request:
+    paths:
+      - "annaban_sdk/live_cross_model.py"
+      - "scripts/cross_model_chat.py"
+      - "tests/test_live_cross_model.py"
+      - "tests/test_spaceflight_safety_cases.py"
+      - "docs/SPACEFLIGHT_RELEVANT_SAFETY_TESTS.md"
+      - ".github/workflows/live-cross-model-tests.yml"
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run cross-model tests
+        run: python -m unittest discover -s tests -p 'test_live_cross_model.py' -v
+      - name: Run simulated spaceflight safety cases
+        run: python -m unittest discover -s tests -p 'test_spaceflight_safety_cases.py' -v
+      - name: Compile adapter, CLI, and test suites
+        run: python -m compileall -q annaban_sdk/live_cross_model.py scripts/cross_model_chat.py tests/test_live_cross_model.py tests/test_spaceflight_safety_cases.py
