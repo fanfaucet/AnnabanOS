@@ -45,3 +45,44 @@ The CLI exits 0 only for AGREED_TEXT, 1 for divergence or hold, and 2 for config
     python -m compileall -q annaban_sdk/live_cross_model.py scripts/cross_model_chat.py
 
 Unit tests use fake adapters; they do not make live provider requests. Live operation requires valid credentials and enabled model access.
+
+
+## xAI-compatible function tool calls
+
+The adapter accepts OpenAI-compatible function schemas and passes them to both configured chat-completions endpoints. xAI tool calling uses the same `tools` / `tool_choice` request shape. The implementation parses returned `tool_calls`, validates each name against the caller-supplied schema allowlist, performs conservative argument checks, hashes canonical arguments, and records metadata in the audit chain.
+
+Example tool schema file (`tools.example.json`):
+
+```json
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "lookup_status",
+      "description": "Look up a non-sensitive status label.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "item": {"type": "string", "maxLength": 40}
+        },
+        "required": ["item"],
+        "additionalProperties": false
+      }
+    }
+  }
+]
+```
+
+Run with tool proposals enabled:
+
+    python scripts/cross_model_chat.py "Check the status of the sensor" --tools-json tools.example.json --tool-choice auto
+
+Possible result status: `TOOL_CALLS_PROPOSED`. CLI output includes tool name, parsed arguments, schema validation result, argument hash, and `executed: false`.
+
+**Security boundary:** this implementation never executes a model-requested function, does not invoke local shell commands, and does not follow model-selected URLs. A schema-valid proposal is not trusted input and is not authorization. Tool implementations, permission scopes, user confirmation, idempotency, and execution audit would require a separate explicit integration. Do not expose secrets or destructive tools in schemas. The provider can still return malformed or untrusted arguments; validation here is deliberately lightweight and is not a complete JSON Schema validator.
+
+Validation:
+
+    python -m unittest discover -s tests -p 'test_live_cross_model.py' -v
+    python -m unittest discover -s tests -p 'test_spaceflight_safety_cases.py' -v
+    python -m compileall -q annaban_sdk/live_cross_model.py scripts/cross_model_chat.py
